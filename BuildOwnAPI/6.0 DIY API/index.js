@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 
 
 
+
 const app = express();
 const port = 3000;
 const masterKey = "4VGP2DN-6EWM4SJ-N6FGRHV-Z3PR3TT";
@@ -32,14 +33,71 @@ app.get("/JokeFilter",(req,res)=>{
 })
 
 //4. POST a new joke
-
+app.post("/jokes",(req,res)=>{
+  const newJoke = {
+    id:jokes.length+1,
+    jokeText:req.body.text,
+    jokeType:req.body.type,
+  }
+  jokes.push(newJoke);
+  res.json(jokes);
+})
 //5. PUT a joke
+app.put("/jokesPut/:id",(req,res)=>{
+  const id = parseInt(req.params.id);
+  
+  const jokeUpdated = jokes.find((joke)=> joke.id===id);
+  jokeUpdated.jokeText= req.body.text;
+  jokeUpdated.jokeType= req.body.type;
+  res.json(jokeUpdated);
+})
 
 //6. PATCH a joke
+app.patch("/jokesPatch/:id",(req,res)=>{
+  const id = parseInt(req.params.id);
+  const exsistingText = jokes.find((joke)=>joke.id===id);
+  const replacedText={
+    id:id,
+    jokeText: req.body.text || exsistingText.jokeText,
+    jokeType: req.body.type|| exsistingText.jokeType,
+  }
+  const index = jokes.findIndex((joke)=>joke.id===id);
+  jokes[index]=replacedText;
+  res.json(jokes);
+})
 
 //7. DELETE Specific joke
+app.delete("/jokesDelete/:id",(req,res)=>{
+  const id =parseInt( req.params.id);
+  const findINdex= jokes.findIndex((joke)=>joke.id===id);
+  if(findINdex>-1)
+  {
+    jokes.splice(findINdex,1);
+    res.json(jokes);
+    res.sendStatus("200");
+  }
+  else
+  {
+    res
+      .status(404)
+      .json({ error: `Joke with id: ${id} not found. No jokes were deleted.` });
+  }
+})
 
 //8. DELETE All jokes
+app.delete("/all",(req,res)=>{
+  const key = req.query.key;
+  console.log(key);
+  if(key===masterKey)
+  {
+    jokes=[];
+    res.status("200").json(jokes);
+  }
+  else
+  {
+    res.status("404").json("You are not authorised");
+  }
+})
 
 app.listen(port, () => {
   console.log(`Successfully started server on port ${port}.`);
